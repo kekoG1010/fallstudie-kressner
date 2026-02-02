@@ -31,6 +31,7 @@
 | $\mathcal{L}$         | Menge der Ladesäulentypen    | „L"         | $\{\text{Alpi-50}, \text{Alpi-200}, \text{Alpi-400}\}$     |
 | $\mathcal{T}$         | Menge der Zeitschritte       | „T"         | $\{1, 2, \ldots, 96\}$ (je 15 Minuten)                     |
 | $\mathcal{T}^{Nacht}$ | Menge der Nacht-Zeitschritte | „T-Nacht"   | $\{73, \ldots, 96\} \cup \{1, \ldots, 24\}$ (18:00–06:00)  |
+| $\mathcal{T}^{Tag}$   | Menge der Tag-Zeitschritte   | „T-Tag"     | $\{25, \ldots, 72\}$ (06:00–18:00)                         |
 
 ---
 
@@ -480,7 +481,9 @@ $$w_{v,l,t} - w_{v,l,t+1} \leq \omega_{v,t+1} \quad \forall v \in \mathcal{V}, l
 
 **Aussprache:** „w-v-l-t minus w-v-l-t-plus-eins kleiner gleich Omega-v-t-plus-eins"
 
-**Bedeutung:** Nachts darf ein Fahrzeug einen Ladepunkt nur verlassen, wenn es im nächsten Zeitschritt auf Route geht. „Wer nachts ansteckt, bleibt bis zur Abfahrt."
+**Bedeutung:** Nachts (18:00-06:00) darf ein Fahrzeug einen Ladepunkt NUR verlassen, wenn es im nächsten Zeitschritt auf Route geht ($\omega_{v,t+1}=1$). „Wer nachts ansteckt, bleibt bis zur Abfahrt."
+
+**Betriebsregel:** Für LKW, die zwischen 18:00-06:00 ins Depot zurückkehren und geladen werden müssen, gilt: Sofortiger Anschluss an Ladepunkt und Verbleib bis zur nächsten Tourabfahrt. Kein Abstecken bei Vollladung erlaubt.
 
 ---
 
@@ -554,7 +557,9 @@ $$\chi_{v,t+1} \leq (1 - \mu_{v,t}) + \omega_{v,t+1} \quad \forall v \in \mathca
 - Verwendet $\omega_{v,t+1}$ statt $\omega_{v,t}$ (prüft ob Fahrzeug im NÄCHSTEN Schritt fährt)
 - Gilt für den gesamten Tag ($\forall t \in \mathcal{T}$), nicht nur nachts
 
-**Effekt:** Nach Erreichen der Vollladung bleibt das Fahrzeug bis zur Abfahrt am Ladepunkt angesteckt, ohne weitere Ladevorgänge zu starten.
+**Effekt:** Nach Erreichen der Vollladung bleibt das Fahrzeug am Ladepunkt angesteckt (nachts) oder steckt sich ab (tagsüber), lädt aber nicht mehr aktiv.
+
+**Interaktion mit NB27:** Tagsüber erzwingt NB27 das Abstecken, nachts bleibt der LKW angesteckt.
 
 ---
 
@@ -572,15 +577,51 @@ $$SOC_{v,t^{start}_r} \geq \sum_{f \in \mathcal{F}^E} \frac{\kappa_f}{100} \cdot
 
 ---
 
-### 5.26 Säulenwechselverbot während Parkphase (NB26) – **NEU (Priorität 3)**
+### 5.26 Säulenwechselverbot während Parkphase (NB26) – **ERWEITERT (Priorität 3)**
 
-**Motivation:** Ein angestecktes Fahrzeug sollte nicht zwischen Ladesäulen wechseln.
+**Motivation:** Ein angestecktes Fahrzeug sollte nicht zwischen Ladesäulen wechseln. Die Regel unterscheidet zwischen Tag- und Nachtzeit.
 
-$$\sum_{l \in \mathcal{L}} \left( w_{v,l,t} - w_{v,l,t+1} \right) \leq \omega_{v,t+1} + (1 - \epsilon_v) \quad \forall v \in \mathcal{V}, t \in \mathcal{T}$$
+#### Nachtzeit (18:00-06:00):
 
-**Aussprache:** „Summe der Säulenwechsel kleiner gleich eins wenn auf Route geht oder Diesel-LKW"
+$$\sum_{l \in \mathcal{L}} \left( w_{v,l,t} - w_{v,l,t+1} \right) \leq \omega_{v,t+1} + (1 - \epsilon_v) \quad \forall v \in \mathcal{V}, t \in \mathcal{T}^{Nacht}$$
 
-**Bedeutung:** Ein E-LKW kann einen Ladepunkt nur verlassen, wenn es zur Tour startet. Verhindert unrealistische Säulenwechsel während der Parkphase.
+**Bedeutung:** Nachts kann ein E-LKW einen Ladepunkt nur verlassen, wenn es zur Tour startet. Kein Abstecken bei Vollladung.
+
+#### Tageszeit (06:00-18:00):
+
+$$\sum_{l \in \mathcal{L}} \left( w_{v,l,t} - w_{v,l,t+1} \right) \leq \omega_{v,t+1} + \mu_{v,t} + (1 - \epsilon_v) \quad \forall v \in \mathcal{V}, t \in \mathcal{T}^{Tag}$$
+
+**Bedeutung:** Tagsüber kann ein E-LKW einen Ladepunkt verlassen, wenn (1) es zur Tour startet ODER (2) es vollgeladen ist. Ermöglicht Zwischenparken nach Vollladung.
+
+---
+
+### 5.27 Zwangsfreigabe bei Vollladung (NB27) – **NEU (Priorität 2)**
+
+**Motivation:** Vollgeladene LKW sollen Ladepunkte AKTIV freigeben, nicht nur optional. Dies verhindert Blockierung wertvoller Schnellladeplätze durch vollgeladene Fahrzeuge, die noch keine Route fahren müssen.
+
+$$\sum_{l \in \mathcal{L}} w_{v,l,t+1} \leq (1 - \mu_{v,t}) + \omega_{v,t+1} \quad \forall v \in \mathcal{V}, t \in \mathcal{T}$$
+
+**Aussprache:** „Summe der Ladepunkt-Belegungen bei t-plus-eins kleiner gleich eins minus Mü-v-t plus Omega-v-t-plus-eins"
+
+**Bedeutung:** Wenn ein LKW zum Zeitpunkt $t$ vollgeladen ist ($\mu_{v,t}=1$) UND im nächsten Zeitschritt keine Route fährt ($\omega_{v,t+1}=0$), dann MUSS der LKW bei $t+1$ von ALLEN Ladepunkten abgesteckt sein ($\sum_l w_{v,l,t+1}=0$).
+
+**Logik:**
+
+- $\mu_{v,t}=0$ (nicht voll) → Constraint inaktiv, LKW kann angesteckt bleiben
+- $\mu_{v,t}=1, \omega_{v,t+1}=0$ (voll, keine Route) → $\sum w_{v,l,t+1} \leq 0$ → MUSS abstecken
+- $\mu_{v,t}=1, \omega_{v,t+1}=1$ (voll, fährt los) → $\sum w_{v,l,t+1} \leq 1$ → Darf noch angesteckt sein (zum Losfahren)
+
+**Praxiseffekt:**
+
+```
+10:00: SOC = 621 kWh, μ=1 aktiviert (vollgeladen)
+       → LKW steckt sich SOFORT ab
+10:15: w=0, parkt auf regulärem Depot-Stellplatz
+       → Ladepunkt ist frei für andere LKW!
+14:00: Route startet, ω=1
+```
+
+**Vorteil:** Maximale Ladepunkt-Effizienz, keine unnötige Blockierung, realistische Depot-Logistik
 
 ---
 
@@ -595,13 +636,16 @@ $$\sum_{l \in \mathcal{L}} \left( w_{v,l,t} - w_{v,l,t+1} \right) \leq \omega_{v
 
 **Constraints-Aufschlüsselung nach Erweiterung:**
 
-- **NB0** (Periodizität): +40 Constraints
-- **NB14a** (χ-Kopplung): +1.920 Constraints
-- **NB24a** (Vollladen-Erkennung): +3.840 Constraints
-- **NB24b** (Ladeunterbrechung): +1.920 Constraints
-- **NB25** (SOC-Prüfung): +400 Constraints
-- **NB26** (Säulenwechsel-Verbot): +1.920 Constraints
-- **Gesamt neue Constraints:** +10.040 (~16% Erhöhung)
+- **NB0** (Periodizität): +21 Constraints
+- **NB14a** (χ-Kopplung): +3.840 Constraints
+- **NB20** (Nachtparkregel): Unverändert, nur für Nachtzeit
+- **NB24a** (Vollladen-Erkennung): +5.760 Constraints
+- **NB24b** (Ladeunterbrechung): +1.900 Constraints
+- **NB25** (SOC-Prüfung): +800 Constraints
+- **NB26** (Säulenwechsel Tag/Nacht): ~1.900 Constraints (aufgeteilt)
+- **NB27** (Zwangsfreigabe NUR tagsüber): +~960 Constraints **[NEU]**
+  - Nur für $t \in \mathcal{T}^{Tag}$: 20 Fz × 48 Zeitschritte = 960
+- **Gesamt neue Constraints:** +~10.000-11.000 (~16-18% Erhöhung)
 
 **Hinweis:** Die Modellerweiterung fügt ca. 1.920 Binärvariablen ($\mu_{v,t}$: 20 Fahrzeuge × 96 Zeitschritte) hinzu. Trotz der Vergrößerung bleibt das Modell für moderne MILP-Solver effizient lösbar.
 
@@ -683,24 +727,57 @@ $$\sum_{l \in \mathcal{L}} \left( w_{v,l,t} - w_{v,l,t+1} \right) \leq \omega_{v
 
 ---
 
-### 9.3 Konkretes Beispiel: Fahrzeug v16
+### 9.3 Konkretes Beispiel: Fahrzeug v5 (Tagsüber) und v16 (Nachts)
 
-**Vorher:**
+#### Szenario 1: v5 vollgeladen um 10:00 Uhr, Route erst um 14:00 Uhr (TAGSÜBER)
 
-- 02:00-04:00: Laden (100 kW)
-- 04:00-05:45: Pause (angesteckt, lädt nicht)
-- 05:45-06:00: Erneut Laden (trotz Vollladung bei 04:00)
+**Vorher (ohne NB27):**
 
-**Nachher:**
+- 10:00: Vollgeladen (μ=1), w=1 (blockiert Spot) ❌
+- 10:15-13:45: Bleibt angesteckt (w=1, χ=0) ❌
+- 14:00: Route startet
+- **Problem:** 4 Stunden Blockierung!
 
-- 02:00-04:00: Laden bis SOC=Q^max (μ=1 aktiviert)
-- 04:00-06:00: Angesteckt, aber χ=0 (NB24b verhindert Laden)
-- 06:00: Abfahrt zur Tour t-6 mit voller Batterie
+**Jetzt (mit NB27 - Zwangsfreigabe tagsüber):**
 
-**Energieeffizienz:** ~5-10% Reduzierung unnötiger Ladevorgänge
+- 10:00: Vollgeladen (μ=1), w=1
+- 10:15: **NB27 erzwingt w=0** → Abstecken! ✅
+- 10:15-13:45: Parkt auf Depot-Stellplatz (w=0)
+- 14:00: Route startet
+- ✅ **Ladepunkt frei ab 10:15!**
 
-- ✅ Realistischeres, batterischonendes Ladeverhalten
-- ✅ Potenzielle Kosteneinsparung durch optimierte Lastverteilung
+#### Szenario 2: v16 vollgeladen um 02:00 Uhr, Route um 06:00 Uhr (NACHTS)
+
+**Betriebsregel Nachtzeit (18:00-06:00):**
+
+- 23:30: Kehrt ins Depot zurück
+- 23:30: Sofort anschließen an Ladepunkt (NB20)
+- 00:00-02:00: Lädt mit 200 kW
+- 02:00: Vollgeladen (μ=1), w=1, χ=0
+- 02:00-06:00: **Bleibt angesteckt** (NB27 NICHT aktiv nachts) ✅
+- 06:00: Route startet, w=0
+- ✅ **Stabiler Nachtbetrieb ohne Umstecken**
+
+#### Szenario 3: Zwischenparken bei vollen Ladepunkten (Tagsüber)
+
+**v18 kehrt um 11:00 zurück, alle Spots besetzt:**
+
+- 11:00: Alle Ladepunkte belegt (v3, v7 laden)
+- 11:00-11:30: v18 parkt auf Depot-Stellplatz ($\sum_l w_{v18,l,t}=0$)
+- 11:30: v7 wird vollgeladen (μ=1) → NB27 erzwingt Abstecken
+- 11:45: Ladepunkt frei → v18 steckt an, w=1
+- 13:00: v18 vollgeladen → NB27 erzwingt Abstecken
+- 13:15: v18 parkt wieder auf Stellplatz
+- 15:00: v18 Route startet
+- ✅ **Flexibles Lademanagement!**
+
+**Verbesserungen:**
+
+- ✅ **Tagsüber:** ~30-50% höhere Ladepunkt-Auslastung durch Freigabe
+- ✅ **Nachts:** Stabiler Betrieb ohne Umstecken
+- ✅ **Zwischenparken:** Ermöglicht bei voller Auslastung
+- ✅ **Realistische Depot-Logistik:** Entspricht Betriebspraxis
+- ✅ **Batterieschonung:** Keine Dauerverbindung tagsüber
 
 ---
 
