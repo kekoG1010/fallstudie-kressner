@@ -227,13 +227,45 @@ $$\sum_{v \in \mathcal{V}} x_{v,r} = 1 \quad \forall r \in \mathcal{R}$$
 
 ---
 
-### NB2: Typzuweisung
+### NB_Typzuweisung: Typzuweisung
 
 $$\sum_{f \in \mathcal{F}} \tau_{v,f} = use_v \quad \forall v \in \mathcal{V}$$
 
 **Aussprache:** „Summe über alle Typen f von Tau-v-f gleich use-v für alle Fahrzeuge v"
 
 **Bedeutung:** Jedes aktive Fahrzeug hat genau einen Typ; inaktive Fahrzeuge haben keinen Typ.
+
+---
+
+### NB_IsElectric: E-Fahrzeug-Identifikation
+
+$$\epsilon_v = \sum_{f \in \mathcal{F}^E} \tau_{v,f} \quad \forall v \in \mathcal{V}$$
+
+**Aussprache:** „Epsilon-v gleich Summe über alle E-Typen f von Tau-v-f für alle Fahrzeuge v"
+
+**Bedeutung:** Ein Fahrzeug ist genau dann ein E-LKW, wenn es einem Elektro-Typ zugeordnet ist.
+
+---
+
+### NB_Aktivierung: Fahrzeug-Aktivierung
+
+$$x_{v,r} \leq use_v \quad \forall v \in \mathcal{V}, r \in \mathcal{R}$$
+
+**Aussprache:** „x-v-r kleiner gleich use-v für alle Fahrzeuge v und alle Routen r"
+
+**Bedeutung:** Ein Fahrzeug kann nur Routen fahren, wenn es aktiviert ist.
+
+---
+
+### NB_EineRoute: Zeitliche Überlappung
+
+$$\sum_{r \in \mathcal{R}(t)} x_{v,r} \leq 1 \quad \forall v \in \mathcal{V}, t \in \mathcal{T}$$
+
+wobei $\mathcal{R}(t) = \{r \in \mathcal{R} : t^{start}_r \leq t < t^{end}_r\}$
+
+**Aussprache:** „Summe über alle zum Zeitpunkt t aktiven Routen r von x-v-r kleiner gleich eins für alle v und t"
+
+**Bedeutung:** Ein Fahrzeug kann zu jedem Zeitpunkt höchstens eine Route fahren.
 
 ---
 
@@ -361,6 +393,19 @@ $$\sum_{l \in \mathcal{L}} p^{ch}_{v,l,t} \leq \sum_{f \in \mathcal{F}^E} P^{max
 
 ---
 
+### IsCharging-Verknüpfung (χ-Kopplung)
+
+$$\sum_{l \in \mathcal{L}} p^{ch}_{v,l,t} \leq M^{ch} \cdot \chi_{v,t} \quad \forall v \in \mathcal{V}, t \in \mathcal{T}$$
+
+$$\sum_{l \in \mathcal{L}} p^{ch}_{v,l,t} \geq \varepsilon \cdot \chi_{v,t} \quad \forall v \in \mathcal{V}, t \in \mathcal{T}$$
+
+**Bedeutung:**
+- Wenn $\chi_{v,t} = 1$, dann muss mindestens $\varepsilon$ kW geladen werden
+- Wenn $\chi_{v,t} = 0$, dann darf nicht geladen werden
+- Koppelt die Binärvariable χ exakt mit der tatsächlichen Ladeleistung
+
+---
+
 ### NB17: Ladepunkt-Kapazität
 
 $$\sum_{v \in \mathcal{V}} w_{v,l,t} \leq n^{Spots}_l \cdot y_l \quad \forall l \in \mathcal{L}, t \in \mathcal{T}$$
@@ -379,16 +424,23 @@ $$\sum_{v \in \mathcal{V}} p^{ch}_{v,l,t} \leq P^{max}_l \cdot y_l \quad \forall
 
 ---
 
-### Is-Charging-Verknüpfung (χ-Kopplung)
+### NB22-23: On-Route-Verknüpfung
 
-$$\sum_{l \in \mathcal{L}} p^{ch}_{v,l,t} \leq M^{ch} \cdot \chi_{v,t} \quad \forall v \in \mathcal{V}, t \in \mathcal{T}$$
+$$\omega_{v,t} \geq x_{v,r} \quad \forall v \in \mathcal{V}, t \in [t^{start}_r, t^{end}_r), r \in \mathcal{R}$$
 
-$$\sum_{l \in \mathcal{L}} p^{ch}_{v,l,t} \geq \varepsilon \cdot \chi_{v,t} \quad \forall v \in \mathcal{V}, t \in \mathcal{T}$$
+$$\omega_{v,t} \leq \sum_{r \in \mathcal{R}(t)} x_{v,r} \quad \forall v \in \mathcal{V}, t \in \mathcal{T}$$
 
-**Bedeutung:**
-- Wenn $\chi_{v,t} = 1$, dann muss mindestens $\varepsilon$ kW geladen werden
-- Wenn $\chi_{v,t} = 0$, dann darf nicht geladen werden
-- Koppelt die Binärvariable χ exakt mit der tatsächlichen Ladeleistung
+**Bedeutung:** $\omega_{v,t} = 1$ genau dann, wenn Fahrzeug $v$ zum Zeitpunkt $t$ eine Route fährt.
+
+---
+
+### NB_STAY: Nachts angesteckt bleiben
+
+$$w_{v,l,t} - w_{v,l,t+1} \leq \omega_{v,t+1} \quad \forall v \in \mathcal{V}, l \in \mathcal{L}, t \in \mathcal{T}^{Nacht}$$
+
+**Aussprache:** „w-v-l-t minus w-v-l-t-plus-eins kleiner gleich Omega-v-t-plus-eins für alle v, l und Nacht-Zeitschritte t"
+
+**Bedeutung:** Nachts (18:00-06:00) darf ein Fahrzeug einen Ladepunkt NUR verlassen, wenn es im nächsten Zeitschritt auf Route geht ($\omega_{v,t+1}=1$). „Wer nachts ansteckt, bleibt bis zur Abfahrt."
 
 ---
 
@@ -399,16 +451,6 @@ $$\chi_{v,t} - \chi_{v,t+1} \leq \omega_{v,t+1} \quad \forall v \in \mathcal{V},
 **Aussprache:** „Chi-v-t minus Chi-v-t-plus-eins kleiner gleich Omega-v-t-plus-eins"
 
 **Bedeutung:** Ein laufender Ladevorgang darf nicht unterbrochen werden, außer das Fahrzeug fährt auf Route. Verhindert ineffiziente Lade-Pause-Lade-Muster.
-
----
-
-### NB22-23: On-Route-Verknüpfung
-
-$$\omega_{v,t} \geq x_{v,r} \quad \forall v \in \mathcal{V}, t \in [t^{start}_r, t^{end}_r), r \in \mathcal{R}$$
-
-$$\omega_{v,t} \leq \sum_{r \in \mathcal{R}(t)} x_{v,r} \quad \forall v \in \mathcal{V}, t \in \mathcal{T}$$
-
-**Bedeutung:** $\omega_{v,t} = 1$ genau dann, wenn Fahrzeug $v$ zum Zeitpunkt $t$ eine Route fährt.
 
 ---
 
@@ -446,7 +488,31 @@ $$\sum_{l \in \mathcal{L}} w_{v,l,t+1} \leq (1 - \mu_{v,t}) + \omega_{v,t+1} \qu
 
 **Bedeutung:** Tagsüber (06:00-18:00): Wenn ein LKW vollgeladen ist ($\mu_{v,t}=1$) und keine Route fährt ($\omega_{v,t+1}=0$), muss er den Ladepunkt freigeben. Verhindert Blockierung von Ladepunkten durch vollgeladene Fahrzeuge.
 
-**Hinweis:** Nachts (18:00-06:00) gilt diese Regel NICHT - vollgeladene LKW bleiben am Ladepunkt angesteckt.
+**Hinweis:** Nachts (18:00-06:00) gilt diese Regel NICHT - vollgeladene LKW bleiben am Ladepunkt angesteckt (siehe NB_STAY).
+
+---
+
+### NB_A: Kein Laden während Fahrt
+
+$$\sum_{l \in \mathcal{L}} w_{v,l,t} \leq 1 - \omega_{v,t} \quad \forall v \in \mathcal{V}, t \in \mathcal{T}$$
+
+**Bedeutung:** Ein Fahrzeug kann nicht an einem Ladepunkt angesteckt sein, wenn es auf Route ist.
+
+---
+
+### NB_B: Ein Fahrzeug maximal an einer Säule
+
+$$\sum_{l \in \mathcal{L}} w_{v,l,t} \leq 1 \quad \forall v \in \mathcal{V}, t \in \mathcal{T}$$
+
+**Bedeutung:** Ein Fahrzeug kann nicht gleichzeitig an mehreren Ladesäulen angesteckt sein.
+
+---
+
+### NB_C: Diesel nicht angesteckt
+
+$$w_{v,l,t} \leq \epsilon_v \quad \forall v \in \mathcal{V}, l \in \mathcal{L}, t \in \mathcal{T}$$
+
+**Bedeutung:** Diesel-Fahrzeuge dürfen nicht an Ladepunkten angesteckt sein.
 
 ---
 
