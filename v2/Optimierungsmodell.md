@@ -478,7 +478,7 @@ $$\chi_{v,t+1} \leq (1 - \mu_{v,t}) + \omega_{v,t+1} \quad \forall v \in \mathca
 
 $$w_{v,l,t} - w_{v,l,t+1} \leq \omega_{v,t+1} + (1 - \chi_{v,t}) \quad \forall v \in \mathcal{V}, l \in \mathcal{L}, t \in \mathcal{T}$$
 
-**Bedeutung:** Während eines Ladevorgangs ($\chi_{v,t} = 1$) darf ein Fahrzeug den Ladepunkt nur verlassen, wenn es auf Route geht. Verhindert Säulenwechsel während des Ladens.
+**Bedeutung:** Ein Fahrzeug darf den Ladepunkt nur verlassen, wenn es auf Route geht ($\omega_{v,t+1} = 1$) ODER nicht aktiv lädt ($\chi_{v,t} = 0$). Verhindert Säulenwechsel während des aktiven Ladens.
 
 ---
 
