@@ -30,6 +30,10 @@ Ein Logistikdepot muss täglich 20 fixe Touren bedienen. Das Modell optimiert:
 │   ├── fallstudie_scm_optimization_GUROBI_Erweiterung.ipynb  # Erweiterung (Teilaufgabe 4)
 │   └── Optimierungsmodell_Erweiterung.md                      # Erweiterte Formulierung (NB1–NB35)
 │
+├── colab/
+│   ├── fallstudie_scm_optimization_GUROBI_colab.ipynb                # Colab-Version (Teilaufgaben 1–3)
+│   └── fallstudie_scm_optimization_GUROBI_Erweiterung_colab.ipynb    # Colab-Version (Teilaufgabe 4)
+│
 └── README.md
 ```
 
@@ -51,6 +55,10 @@ Erweiterung des Basismodells um eine jährliche CO₂-Obergrenze (450 t/Jahr) mi
 - **Exklusive Stromtypwahl**: Binäre Entscheidung zwischen Ökostrom (0,35 EUR/kWh, 0 kg CO₂/kWh) und Industriestrom (0,25 EUR/kWh, 0,45 kg CO₂/kWh)
 - **CO₂-Emissionsberechnung**: Diesel (2,65 kg CO₂/L) + Strom
 - **CO₂-Obergrenze**: Harte Nebenbedingung ≤ 450 t/Jahr
+
+### Google Colab
+
+Der Ordner `colab/` enthält Versionen der Notebooks, die direkt in Google Colab ausführbar sind – ohne Gurobi-Installation. Diese verwenden **HiGHS** als Open-Source-Solver.
 
 ## Setup
 
