@@ -102,18 +102,19 @@ Diese Dokumentation enthält das erweiterte Optimierungsmodell mit **CO₂-Emiss
 | $M^{SOC}$     | Big-M für SOC-Constraints | „M-SOC"      | 621    | kWh     |
 | $M^{Sp}$      | Big-M für Speicher        | „M-Speicher" | 10.000 | kW      |
 | $M^{ch}$      | Big-M für Ladeleistung    | „M-charge"   | 400    | kW      |
+| $M^{Netz}$    | Big-M für Netzleistung (ERWEITERUNG) | „M-Netz" | 1.000 | kW |
 | $\varepsilon$ | Minimalladeleistung       | „Epsilon"    | 0,1    | kW      |
 
 ### 2.8 CO₂-Emissionsparameter und Stromtypen (ERWEITERUNG)
 
-| Symbol              | Beschreibung                  | Aussprache           | Wert    | Einheit  |
-| ------------------- | ----------------------------- | -------------------- | ------- | -------- |
-| $p^{Strom,Öko}$     | Ökostrom-Arbeitspreis         | „p-Strom-Öko"        | 0,35    | EUR/kWh  |
-| $p^{Strom,Ind}$     | Industriestrom-Arbeitspreis   | „p-Strom-Industrie"  | 0,25    | EUR/kWh  |
-| $e^{CO2,Öko}$       | CO₂-Emissionen Ökostrom       | „e-CO2-Öko"          | 0       | kg/kWh   |
-| $e^{CO2,Ind}$       | CO₂-Emissionen Industriestrom | „e-CO2-Industrie"    | 0,45    | kg/kWh   |
-| $e^{CO2,Diesel}$    | CO₂-Emissionen Diesel         | „e-CO2-Diesel"       | 2,65    | kg/L     |
-| $Cap^{CO2}$         | CO₂-Obergrenze pro Jahr       | „Cap-CO2"            | 450.000 | kg/Jahr  |
+| Symbol              | Beschreibung                  | Code-Variable            | Wert    | Einheit  |
+| ------------------- | ----------------------------- | ------------------------ | ------- | -------- |
+| $p^{Strom,Öko}$     | Ökostrom-Arbeitspreis         | `price_energy_eco`       | 0,35    | EUR/kWh  |
+| $p^{Strom,Ind}$     | Industriestrom-Arbeitspreis   | `price_energy_industrial`| 0,25    | EUR/kWh  |
+| $e^{CO2,Öko}$       | CO₂-Emissionen Ökostrom       | `co2_per_kwh_eco`        | 0       | kg/kWh   |
+| $e^{CO2,Ind}$       | CO₂-Emissionen Industriestrom | `co2_per_kwh_industrial` | 0,45    | kg/kWh   |
+| $e^{CO2,Diesel}$    | CO₂-Emissionen Diesel         | `co2_per_liter_diesel`   | 2,65    | kg/L     |
+| $Cap^{CO2}$         | CO₂-Obergrenze pro Jahr       | `co2_cap_year`           | 450.000 | kg/Jahr  |
 
 **Hinweis:** Ökostrom wird bilanziell mit 0 kg CO₂/kWh angesetzt (zertifizierter Grünstrom).
 
